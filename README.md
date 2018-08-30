@@ -1,7 +1,7 @@
-# OSTRIDGE
-    O S T R I D G E
+# OSTRIDGE ?
+    O S T R I D G E ?
     p y h u s a o h   
-    e s r s   m 0 ? 
+    e s r s   m 0  
     r t o t   n d 
     a e u 
     t m g
