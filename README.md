@@ -11,3 +11,23 @@
     i   h
     n
     g
+
+
+## Tools
+First you will need rust, so download and install it [here](https://www.rust-lang.org/en-US/install.html)
+
+We will need to use the nightly unstable version of the compiler, so once you have installed rust, use:
+
+`rustup override add nightly`
+
+#### Qemu
+`sudo apt-get install qemu`
+
+### Packages
+`cargo install cargo-xbuild`
+
+`cargo install bootimage --version "^0.5.0"`
+
+
+
+You should be able to run the OS using `bootimage run`

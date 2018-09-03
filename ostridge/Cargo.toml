@@ -3,10 +3,8 @@ name = "ostridge"
 version = "0.1.0"
 authors = ["KyleS22 <25314187+KyleS22@users.noreply.github.com>"]
 
-[profile.dev]
-panic = "abort"
-
-[profile.release]
-panic = "abort"
+[package.metadata.bootimage]
+default-target = "x86_64-ostridge.json"
 
 [dependencies]
+bootloader_precompiled = "0.2.0"
