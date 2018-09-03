@@ -1,6 +1,6 @@
 # OSTRIDGE ?
 
-![Rusty The Ostrich](./docs/RustyTheOstridge.png?raw=true)
+<img src="./docs/RustyTheOstridge.png" width="250">
 
     O S T R I D G E ?
     p y h u s a o h   
