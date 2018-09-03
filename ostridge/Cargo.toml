@@ -1,0 +1,12 @@
+[package]
+name = "ostridge"
+version = "0.1.0"
+authors = ["KyleS22 <25314187+KyleS22@users.noreply.github.com>"]
+
+[profile.dev]
+panic = "abort"
+
+[profile.release]
+panic = "abort"
+
+[dependencies]
