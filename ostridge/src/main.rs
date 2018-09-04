@@ -15,6 +15,7 @@ extern crate ostridge;
 
 use core::panic::PanicInfo;
 
+
 /// This defines the starting function for the executable 
 /// No mangle says not to change the name of the function, so that the C runtime can find "_start"
 /// Extern C says to use the C runtime to call this function
@@ -24,7 +25,7 @@ pub extern "C" fn _start() -> ! {
     
     // Print to VGA buffer
     println!("Hello World{}", "!");
-
+    
     // Print to serial port
     serial_println!("Hello Host{}", "!");
 

@@ -2,6 +2,8 @@ use volatile::Volatile;
 use core::fmt;
 use spin::Mutex;
 
+// TODO: Implement functions to allow user to change colours
+
 #[allow(dead_code)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(u8)] // This ensures the values are stored as 8-bit unsigned integers
@@ -54,7 +56,7 @@ struct Buffer {
 
 /// A writer that writes to the last line and shifts up when full or newline is encountered
 pub struct Writer {
-    column_position: usize, // Stire the current position in the last row
+    column_position: usize, // Store the current position in the last row
     colour_code: ColourCode,  // The colour code for the foreground and background
     buffer: &'static mut Buffer,    // Reference to the buffer that lasts the entire runtime
 }
@@ -244,7 +246,78 @@ mod test {
         }
     }
 
-    // TODO: A test that changes colours between writes
-    // TODO: A test that checks that the top line is shifted off screen on newline
+    #[test]
+    fn change_colours() {
+        use core::fmt::Write;
+
+        let mut writer = construct_writer();
+        let old_colour_code = writer.colour_code;
+        let new_colour_code = ColourCode::new(Colour::Red, Colour::Pink);
+
+        writeln!(&mut writer, "a").unwrap();
+
+        // Change colours of the writer
+        writer.colour_code = new_colour_code;
+        assert_eq!(writer.colour_code, new_colour_code);
+
+        writeln!(&mut writer, "b").unwrap();
+
+        for (i, row) in writer.buffer.chars.iter().enumerate() {
+            for (j, screen_char) in row.iter().enumerate() {
+                let screen_char = screen_char.read();
+                if i == BUFFER_HEIGHT - 3 && j == 0 {
+                    assert_eq!(screen_char.ascii_character, b'a');
+                    assert_eq!(screen_char.colour_code, old_colour_code);
+                } else if i == BUFFER_HEIGHT - 2 && j == 0 {
+                    assert_eq!(screen_char.ascii_character, b'b');
+                    assert_eq!(screen_char.colour_code, new_colour_code);
+                } else if i >= BUFFER_HEIGHT - 2 {
+                    assert_eq!(screen_char.ascii_character, b' ');
+                } else {
+                    assert_eq!(screen_char, empty_char());
+                }
+            }
+        }
+    }
+    
+    #[test]
+    fn top_line_shift() {
+        use core::fmt::Write;
+
+        let mut writer = construct_writer();
+
+        for _ in 0..BUFFER_HEIGHT {
+            writeln!(&mut writer, "Test");
+        }
+
+        for (i, row) in writer.buffer.chars.iter().enumerate() {
+            for (_j, screen_char) in row.iter().enumerate() {
+                let screen_char = screen_char.read();
+                if i == BUFFER_HEIGHT - 1 {
+                    assert_eq!(screen_char.ascii_character, b' ');
+                    assert_eq!(screen_char.colour_code, writer.colour_code);
+                } 
+            }
+        }
+    }
+    
+    #[test]
+    fn non_ascii_chars() {
+        use core::fmt::Write;
+
+        let mut writer = construct_writer();
+
+        writeln!(&mut writer, "ö");
+        for (i, row) in writer.buffer.chars.iter().enumerate() {
+            for (j, screen_char) in row.iter().enumerate() {
+                let screen_char = screen_char.read();
+                if i == BUFFER_HEIGHT - 2 && j == 0 {
+                    assert_eq!(screen_char.ascii_character, 0xfe);
+                    assert_eq!(screen_char.colour_code, writer.colour_code);
+                } 
+            }
+        }
+
+    }
     // TODO: A test that checks that non-ASCII characters are handled properly
 }
