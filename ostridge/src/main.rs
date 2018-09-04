@@ -10,25 +10,10 @@
 // Also ignore warnings that occur when we compile the test build, due to having no OS.
 #![cfg_attr(test, allow(dead_code, unused_macros, unused_imports))]
 
-// Use the standard libray in tests
-#[cfg(test)]
-extern crate std;
-
-// Use this for tests too
-#[cfg(test)]
-extern crate array_init;
-
-extern crate bootloader_precompiled;
-extern crate volatile;
-#[macro_use]    // Import lazy_static! macro
-extern crate lazy_static;
-extern crate spin;  // Spinlocks
-
+#[macro_use]
+extern crate ostridge;
 
 use core::panic::PanicInfo;
-
-#[macro_use]
-mod vga_buffer;
 
 /// This defines the starting function for the executable 
 /// No mangle says not to change the name of the function, so that the C runtime can find "_start"
@@ -37,8 +22,15 @@ mod vga_buffer;
 #[cfg(not(test))]   // only compile when the test flag is not set
 pub extern "C" fn _start() -> ! {
     
+    // Print to VGA buffer
     println!("Hello World{}", "!");
-    panic!("At The Disco");
+
+    // Print to serial port
+    serial_println!("Hello Host{}", "!");
+
+    // Show use of panic, we dont need this here
+    // panic!("At The Disco");
+
 
     loop {}
 }
@@ -51,3 +43,4 @@ pub fn panic(info: &PanicInfo) -> ! {
     println!("{}", info);
     loop {}
 }
+

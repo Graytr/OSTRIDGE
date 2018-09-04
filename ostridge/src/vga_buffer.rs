@@ -136,16 +136,18 @@ lazy_static! {
     pub static ref WRITER: Mutex<Writer> = Mutex::new(Writer {
         column_position: 0,
         colour_code: ColourCode::new(Colour::Yellow, Colour::Black),
-        buffer: unsafe { &mut *(0xb8000 as *mut Buffer) },
+        buffer: unsafe { &mut *(0xb8000 as *mut Buffer) },  // 0xb8000 is the memory address of the VGA buffer
     });
 }
 
 // Macro for printing using our vga_buffer
+#[macro_export]
 macro_rules! print {
     ($($arg:tt)*) => ($crate::vga_buffer::print(format_args!($($arg)*)));
 }
 
 // Macro for printing with newlines
+#[macro_export]
 macro_rules! println {
     () => (print!("\n"));
     ($fmt:expr) => (print!(concat!($fmt, "\n")));

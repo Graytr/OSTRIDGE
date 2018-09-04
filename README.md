@@ -31,3 +31,5 @@ We will need to use the nightly unstable version of the compiler, so once you ha
 
 
 You should be able to run the OS using `bootimage run`
+Unit tests can be run using `cargo test`
+Integration tests can be run using `bootimage test`
