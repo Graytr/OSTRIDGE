@@ -2,8 +2,6 @@ use volatile::Volatile;
 use core::fmt;
 use spin::Mutex;
 
-// TODO: Implement functions to allow user to change colours
-
 #[allow(dead_code)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(u8)] // This ensures the values are stored as 8-bit unsigned integers
@@ -122,6 +120,16 @@ impl Writer {
             self.buffer.chars[row][col].write(blank);
         }
     }
+
+    fn change_colours(&mut self, new_colour_code: ColourCode) {
+        self.colour_code = new_colour_code;
+    }
+
+    fn get_colour(&mut self) -> ColourCode {
+        self.colour_code
+    }
+
+    
 }
 
 /// Implementation of formatted writing for our Writer
@@ -133,7 +141,7 @@ impl fmt::Write for Writer {
     }
 }
 
-/// A static writer so we don't need too keep dealing with a Writer instance
+/// A static writer so we don't need to keep dealing with a Writer instance
 lazy_static! {
     pub static ref WRITER: Mutex<Writer> = Mutex::new(Writer {
         column_position: 0,
@@ -160,6 +168,22 @@ macro_rules! println {
 pub fn print(args: fmt::Arguments) {
     use core::fmt::Write;
     WRITER.lock().write_fmt(args).unwrap();
+}
+
+/// Macro used for printing in colour.
+#[macro_export]
+macro_rules! colour_print {
+    ($foreground:tt, $background:tt, $($arg:tt)*) => ($crate::vga_buffer::colour_print(format_args!($($arg)*), $foreground, $background));
+}
+
+
+/// Function to allow printing in colour other than the default
+pub fn colour_print(args: fmt::Arguments, foreground_colour: Colour, background_colour: Colour) {
+    let old_colour_code = WRITER.lock().get_colour();
+    let new_colour_code = ColourCode::new(foreground_colour, background_colour);
+    WRITER.lock().change_colours(new_colour_code);
+    print(args);
+    WRITER.lock().change_colours(old_colour_code);
 }
 
 #[cfg(test)]
@@ -319,5 +343,4 @@ mod test {
         }
 
     }
-    // TODO: A test that checks that non-ASCII characters are handled properly
 }

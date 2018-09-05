@@ -14,6 +14,7 @@
 extern crate ostridge;
 
 use core::panic::PanicInfo;
+use ostridge::vga_buffer::Colour;
 
 
 /// This defines the starting function for the executable 
@@ -22,10 +23,17 @@ use core::panic::PanicInfo;
 #[no_mangle]
 #[cfg(not(test))]   // only compile when the test flag is not set
 pub extern "C" fn _start() -> ! {
+
+    let mut foreground = Colour::Green;
+    let background = Colour::Black;
+
+    colour_print!(foreground, background, "Welcome to OSTRIDGE!\n\n");
     
-    // Print to VGA buffer
-    println!("Hello World{}", "!");
-    
+    foreground = Colour::Brown;
+
+    colour_print!(foreground, background, "Keep your head in the sand.\n\n");
+    println!("READY");
+
     // Print to serial port
     serial_println!("Hello Host{}", "!");
 
