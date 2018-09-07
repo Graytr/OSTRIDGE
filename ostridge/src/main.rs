@@ -1,6 +1,8 @@
 // Define usage of the unstable feature for implementing a panic
 #![feature(panic_handler)]
 
+#![feature(abi_x86_interrupt)]
+
 // Disable the standard library cause theres no OS for it to rely on
 #![no_std]
 
@@ -13,9 +15,24 @@
 #[macro_use]
 extern crate ostridge;
 
+#[macro_use]
+extern crate lazy_static;
+
+extern crate x86_64;
+
 use core::panic::PanicInfo;
 use ostridge::vga_buffer::Colour;
 
+use x86_64::structures::idt::{InterruptDescriptorTable, ExceptionStackFrame};
+
+
+lazy_static! {
+    static ref IDT: InterruptDescriptorTable = {
+        let mut idt = InterruptDescriptorTable::new();
+        idt.breakpoint.set_handler_fn(breakpoint_handler);
+        idt
+    };
+}
 
 /// This defines the starting function for the executable 
 /// No mangle says not to change the name of the function, so that the C runtime can find "_start"
@@ -23,6 +40,8 @@ use ostridge::vga_buffer::Colour;
 #[no_mangle]
 #[cfg(not(test))]   // only compile when the test flag is not set
 pub extern "C" fn _start() -> ! {
+
+    init_idt();
 
     let mut foreground = Colour::Green;
     let background = Colour::Black;
@@ -37,6 +56,10 @@ pub extern "C" fn _start() -> ! {
     // Print to serial port
     serial_println!("Hello Host{}", "!");
 
+    // invoke a breakpoint exception
+    x86_64::instructions::int3();
+
+    println!("It did not crash!");
     // Show use of panic, we dont need this here
     // panic!("At The Disco");
 
@@ -52,4 +75,12 @@ pub fn panic(info: &PanicInfo) -> ! {
     println!("{}", info);
     loop {}
 }
+/// Initialize the Interrupt Descriptor Table for handling exceptions
+pub fn init_idt() {
+    IDT.load();
+}
 
+/// Add an exception handler for breakpoints
+extern "x86-interrupt" fn breakpoint_handler(stack_frame: &mut ExceptionStackFrame) {
+    println!("EXCEPTION: BREAKPOINT\n{:#?}", stack_frame);
+}
