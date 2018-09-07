@@ -1,3 +1,8 @@
+//! vga_buffer
+//!
+//! The vga_buffer is used to handle printing ascii characters to the screen
+//!
+
 use volatile::Volatile;
 use core::fmt;
 use spin::Mutex;
@@ -30,7 +35,15 @@ pub enum Colour {
 struct ColourCode(u8);
 
 impl ColourCode {
-    // Create a new colour code with the desired foreground and background colours
+    /// Create a new colour code with the desired foreground and background colours
+    ///
+    /// # Arguments
+    ///
+    /// * `foreground` - A Colour enum representing one of the predefined colours as an unsigned int, used 
+    ///                  to set the colour of a printed character
+    /// * `background` - A Colour enum representing one of the predefined colours as an unsinged int, used
+    ///                  to set the background colour of a printed character
+
     fn new(foreground: Colour, background: Colour) -> ColourCode {
         ColourCode((background as u8) << 4 | (foreground as u8))
     } 
@@ -40,13 +53,17 @@ impl ColourCode {
 #[repr(C)]  // Make sure the struct is represented exactly like a C struct, keeps ordering
 /// A character that can be displayed on the screen
 struct ScreenChar {
+    /// A character is represented by an 8-bit unsigned integer, for ascii-codes
     ascii_character: u8,
+    /// What's life without a bit of colour?
     colour_code: ColourCode,
 }
 
+// The standard size of the buffer
 const BUFFER_HEIGHT: usize = 25;
 const BUFFER_WIDTH: usize = 80;
 
+/// Represents a 2D array for characters to be written to the screen
 struct Buffer {
     // Volatile allows us to specify that there are side effects to reads and writes, and should not be optimized
     chars: [[Volatile<ScreenChar>; BUFFER_WIDTH]; BUFFER_HEIGHT],
@@ -54,13 +71,20 @@ struct Buffer {
 
 /// A writer that writes to the last line and shifts up when full or newline is encountered
 pub struct Writer {
-    column_position: usize, // Store the current position in the last row
-    colour_code: ColourCode,  // The colour code for the foreground and background
-    buffer: &'static mut Buffer,    // Reference to the buffer that lasts the entire runtime
+    /// Store the current position in the last row
+    column_position: usize, 
+    /// The colour code for the foreground and background
+    colour_code: ColourCode,  
+    /// Reference to the buffer that lasts the entire runtime
+    buffer: &'static mut Buffer,    
 }
 
 impl Writer {
     /// Write a new byte to the buffer
+    ///
+    /// # Arguments
+    ///
+    /// * `byte` - An unsigned integer byte representing the character to write
     pub fn write_byte(&mut self, byte: u8) {
         match byte {
             b'\n' => self.new_line(),
@@ -85,6 +109,11 @@ impl Writer {
         }
     }
 
+    /// Write a new string to the buffer
+    ///
+    /// # Arguments
+    ///
+    /// * `s` - A string to write to the screen
     pub fn write_string(&mut self, s: &str) {
         for byte in s.bytes() {
             match byte {
@@ -110,6 +139,10 @@ impl Writer {
     }
 
     /// Replace all chars in a row with blanks
+    ///
+    /// # Arguments
+    ///
+    /// * `row` - A usize value representing the row in the buffer to clear
     fn clear_row(&mut self, row: usize) {
         let blank = ScreenChar {
             ascii_character: b' ',
@@ -121,20 +154,24 @@ impl Writer {
         }
     }
 
+    /// Change the current colour of the writer
+    ///
+    /// # Arguments
+    /// * `new_colour_code` - A ColourCode representing the colour the Writer should use to create characters
     fn change_colours(&mut self, new_colour_code: ColourCode) {
         self.colour_code = new_colour_code;
     }
 
+    /// Get the current colour the writer is using to write characters
     fn get_colour(&mut self) -> ColourCode {
         self.colour_code
     }
-
-    
 }
 
-/// Implementation of formatted writing for our Writer
-/// This should allow us to use Rust formatting macros like write! and writeln!
+// Implementation of formatted writing for our Writer
+// This should allow us to use Rust formatting macros like write! and writeln!
 impl fmt::Write for Writer {
+    /// Definition of a formatted write for the writer
     fn write_str(&mut self, s: &str) -> fmt::Result {
         self.write_string(s);
         Ok(())
@@ -150,13 +187,49 @@ lazy_static! {
     });
 }
 
-// Macro for printing using our vga_buffer
+/// Macro for printing using our vga_buffer
+///
+/// # Examples
+/// 
+/// This example will print "This is a test!" to the static (screen) buffer
+/// ```rust, no_run
+/// # #[macro_use] extern crate ostridge;
+/// # fn main() {
+/// print!("This is a test!");
+/// # }
+/// ```
+///
+/// This example will print "This is also a test!" to the static (screen) buffer
+/// ```rust, no_run
+/// # #[macro_use] extern crate ostridge;
+/// # fn main() {
+/// print!("This is {}", "also a test!");
+/// # }
+/// ```
 #[macro_export]
 macro_rules! print {
     ($($arg:tt)*) => ($crate::vga_buffer::print(format_args!($($arg)*)));
 }
 
-// Macro for printing with newlines
+/// Macro for printing with newlines
+///
+/// # Examples
+///
+/// This example will print "This is a test!" to the static (screen) buffer, including a newline
+/// ```rust, no_run
+/// # #[macro_use] extern crate ostridge;
+/// # fn main() {
+/// print!("This is a test!");
+/// # }
+/// ```
+///
+/// This example will print "This is also a test!" to the static (screen) buffer, including a newline
+/// ```rust, no_run
+/// # #[macro_use] extern crate ostridge;
+/// # fn main() {
+/// print!("This is {}", "also a test!");
+/// # }
+/// ```
 #[macro_export]
 macro_rules! println {
     () => (print!("\n"));
@@ -165,12 +238,30 @@ macro_rules! println {
 }
 
 /// Used for printing using the Static Writer
+///
+/// # Arguments
+///
+/// * `args` - A formatted arguments object containing the inputs to print
 pub fn print(args: fmt::Arguments) {
     use core::fmt::Write;
     WRITER.lock().write_fmt(args).unwrap();
 }
 
-/// Macro used for printing in colour.
+/// Macro for printing in colour
+///
+/// # Examples
+///
+/// This example will print "This is colourful a test!" to the static (screen) buffer in a red text with blue background
+/// ```rust, no_run
+/// # #[macro_use] extern crate ostridge;
+/// # fn main() {
+/// use ostridge::vga_buffer::Colour;
+///
+/// let foreground = Colour::Red;
+/// let background = Colour::Blue;
+/// colour_print!(foreground, background, "This is colourful a test!");
+/// # }
+/// ```
 #[macro_export]
 macro_rules! colour_print {
     ($foreground:tt, $background:tt, $($arg:tt)*) => ($crate::vga_buffer::colour_print(format_args!($($arg)*), $foreground, $background));
@@ -178,6 +269,12 @@ macro_rules! colour_print {
 
 
 /// Function to allow printing in colour other than the default
+///
+/// # Arguments
+///
+/// * 'args' - The formatted string arguments to print to the screen
+/// * `foreground_colour` - The Colour enum to use as the colour of the characters
+/// * `background_colour` - The Colour enum to use as the colour for the background
 pub fn colour_print(args: fmt::Arguments, foreground_colour: Colour, background_colour: Colour) {
     let old_colour_code = WRITER.lock().get_colour();
     let new_colour_code = ColourCode::new(foreground_colour, background_colour);
