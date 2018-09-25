@@ -22,6 +22,8 @@ pub mod vga_buffer;
 
 pub mod serial;
 
+pub mod gdt;
+
 pub unsafe fn exit_qemu() {
     use x86_64::instructions::port::Port;
 
