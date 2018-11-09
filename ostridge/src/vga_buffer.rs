@@ -244,7 +244,13 @@ macro_rules! println {
 /// * `args` - A formatted arguments object containing the inputs to print
 pub fn print(args: fmt::Arguments) {
     use core::fmt::Write;
-    WRITER.lock().write_fmt(args).unwrap();
+    use x86_64::instructions::interrupts;
+
+    // Execute the write in an interrupt free environment
+    // This prevents deadlocks from ocurring if a hardware interrupt stops the main function while printing
+    interrupts::without_interrupts(|| {
+        WRITER.lock().write_fmt(args).unwrap();
+    });
 }
 
 /// Macro for printing in colour

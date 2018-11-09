@@ -12,7 +12,13 @@ lazy_static! {
 
 pub fn print(args: ::core::fmt::Arguments) {
     use core::fmt::Write;
-    SERIAL1.lock().write_fmt(args).expect("Printing to serial failed");
+    use x86_64::instructions::interrupts;
+
+    // Execute the write in an interrupt free environment
+    // This prevents deadlocks from ocurring if a hardware interrupt stops the main function while printing
+    interrupts::without_interrupts(|| {
+        SERIAL1.lock().write_fmt(args).expect("Printing to serial failed");
+    });
 }
 
 

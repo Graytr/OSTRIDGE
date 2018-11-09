@@ -15,28 +15,12 @@
 #[macro_use]
 extern crate ostridge;
 
-#[macro_use]
 extern crate lazy_static;
 
 extern crate x86_64;
 
 use core::panic::PanicInfo;
 use ostridge::vga_buffer::Colour;
-
-use x86_64::structures::idt::{InterruptDescriptorTable, ExceptionStackFrame};
-
-lazy_static! {
-    static ref IDT: InterruptDescriptorTable = {
-        let mut idt = InterruptDescriptorTable::new();
-        idt.breakpoint.set_handler_fn(breakpoint_handler);
-        unsafe {
-            idt.double_fault.set_handler_fn(double_fault_handler)
-                .set_stack_index(ostridge::gdt::DOUBLE_FAULT_IST_INDEX);
-        }
-
-        idt
-    };
-}
 
 
 /// This defines the starting function for the executable 
@@ -46,8 +30,17 @@ lazy_static! {
 #[cfg(not(test))]   // only compile when the test flag is not set
 pub extern "C" fn _start() -> ! {
 
+    // NOTE: This is an old implementation of hardware interrupt controller, want to replace it with the newer APIC 
+    use ostridge::interrupts::PICS;
+
     ostridge::gdt::init();
-    init_idt();
+    ostridge::interrupts::init_idt();
+
+    // Initialize the PIC for hardware interrupts
+    unsafe{ PICS.lock().initialize() };
+
+    // Tell the cpu to listen to the interrupt controller
+    x86_64::instructions::interrupts::enable();
 
     let mut foreground = Colour::Green;
     let background = Colour::Black;
@@ -63,14 +56,14 @@ pub extern "C" fn _start() -> ! {
     serial_println!("Hello Host{}", "!");
 
     // invoke a breakpoint exception
-    x86_64::instructions::int3();
+    //x86_64::instructions::int3();
 
     println!("It did not crash!");
     // Show use of panic, we dont need this here
     // panic!("At The Disco");
 
 
-    loop {}
+    ostridge::hlt_loop();
 }
 
 /// Define function to call on panic
@@ -79,20 +72,6 @@ pub extern "C" fn _start() -> ! {
 #[no_mangle]
 pub fn panic(info: &PanicInfo) -> ! {
     println!("{}", info);
-    loop {}
-}
-/// Initialize the Interrupt Descriptor Table for handling exceptions
-pub fn init_idt() {
-    IDT.load();
+    ostridge::hlt_loop();
 }
 
-/// Add an exception handler for breakpoints
-extern "x86-interrupt" fn breakpoint_handler(stack_frame: &mut ExceptionStackFrame) {
-    println!("EXCEPTION: BREAKPOINT\n{:#?}", stack_frame);
-}
-
-/// Add an exception handler for double faults, this prevents triple faults
-extern "x86-interrupt" fn double_fault_handler(stack_frame: &mut ExceptionStackFrame, _error_code: u64){
-    println!("EXCEPTION: DOUBLE FAULT\n{:#?}", stack_frame);
-    loop{}
-}
