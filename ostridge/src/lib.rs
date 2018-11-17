@@ -30,6 +30,8 @@ pub mod gdt;
 
 pub mod interrupts;
 
+pub mod ps_2_scancodes;
+
 pub unsafe fn exit_qemu() {
     use x86_64::instructions::port::Port;
 

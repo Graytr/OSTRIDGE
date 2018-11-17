@@ -84,28 +84,22 @@ extern "x86-interrupt" fn timer_interrupt_handler(_stack_frame: &mut ExceptionSt
 /// Interrupt handler for keyboard input
 extern "x86-interrupt" fn keyboard_interrupt_handler(_stack_frame: &mut ExceptionStackFrame)
 {
+    use ps_2_scancodes;
     use x86_64::instructions::port::Port;
 
-    let port = Port::new(0x60);
+
+    let port = Port::new(ps_2_scancodes::PS2_PORT_ADDR);
     let scancode: u8 = unsafe { port.read() };  // Read the data port of the PS/2 controller
 
-    // Match the scancode to a key  NOTE: THIS SHOULD PROBABLY BE ABSTRACTED TO ITS OWN MODULE ALSO NEED TO ADD THE OTHER KEYS
-    let key = match scancode {
-        0x02 => Some('1'),
-        0x03 => Some('2'),
-        0x04 => Some('3'),
-        0x05 => Some('4'),
-        0x06 => Some('5'),
-        0x07 => Some('6'),
-        0x08 => Some('7'),
-        0x09 => Some('8'),
-        0x0a => Some('9'),
-        0x0b => Some('0'),
-        _ => None,
-    };
 
-    if let Some(key) = key {
+    let mut scancode_reader = ps_2_scancodes::PS2ScancodeReader::new(ps_2_scancodes::ScanCodeSet::SET1);
+
+    let key_code = scancode_reader.match_scancode(scancode);
+
+    if let Some(key) = key_code.key {
         print!("{}", key);
+    }else if let Some(_control) = key_code.control_key{
+        print!("A control key was pressed.")
     }
 
     unsafe { PICS.lock().notify_end_of_interrupt(KEYBOARD_INTERRUPT_ID) }
