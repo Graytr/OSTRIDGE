@@ -96,10 +96,15 @@ extern "x86-interrupt" fn keyboard_interrupt_handler(_stack_frame: &mut Exceptio
 
     let key_code = scancode_reader.match_scancode(scancode);
 
+    // POSSIBLE TODO:  I think we need to keep track of things like capslock and numlock here?
+
     if let Some(key) = key_code.key {
         print!("{}", key);
     }else if let Some(_control) = key_code.control_key{
         print!("A control key was pressed.")
+    }else{
+        // TODO: Check double interrupt scancodes for keys (will need to store this scancode and wait for the next interrupt)
+        // TODO: Also do we need to handle combined key presses here? ex. SHIFT+CTRL or SHIFT+A.
     }
 
     unsafe { PICS.lock().notify_end_of_interrupt(KEYBOARD_INTERRUPT_ID) }
