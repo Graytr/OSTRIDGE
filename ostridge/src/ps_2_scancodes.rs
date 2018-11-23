@@ -10,6 +10,7 @@ pub enum ScanCodeSet {
 
 pub struct PS2ScancodeReader {
     scan_code_set: ScanCodeSet,
+    double_code: bool,
 }
 
 pub enum ControlKey {
@@ -19,18 +20,40 @@ pub enum ControlKey {
     Enter = 3,
     LeftCtrl = 4,
     LeftShift = 5,
+    RightShift = 6,
+    LeftAlt = 7,
+    CapsLock = 8,
+    F1 = 9,
+    F2 = 10,
+    F3 = 11,
+    F4 = 12,
+    F5 = 13,
+    F6 = 14,
+    F7 = 15,
+    F8 = 16,
+    F9 = 17,
+    F10 = 18,
+    NumberLock = 19,
+    ScrollLock = 20,
+    F11 = 21,
+    F12 = 22,
+    MultimediaPrevTrack = 23,
+    MultimediaNextTrack = 24,
+    RightCtrl = 25
+
 }
 
 pub struct PS2Key{
     pub key: Option<char>,
     pub control_key: Option<ControlKey>,
-    pub pressed: bool   // True on pressed, false on released
+    pub pressed: bool,   // True on pressed, false on released
+    pub keypad: bool
 }
 
 impl PS2ScancodeReader {
 
     pub fn new(scan_code_set: ScanCodeSet) -> PS2ScancodeReader {
-        PS2ScancodeReader{scan_code_set: scan_code_set}
+        PS2ScancodeReader{scan_code_set: scan_code_set, double_code: false}
     }
 
     pub fn set_scancode_set(&mut self, set: ScanCodeSet){
@@ -41,195 +64,243 @@ impl PS2ScancodeReader {
 
         match self.scan_code_set {
             ScanCodeSet::SET1 => self.match_set1_scancode(code),
-            _ => PS2Key {key: None, control_key: None, pressed: false}
+            _ => PS2Key {key: None, control_key: None, pressed: false, keypad: false}
         }
 
+    }
+
+    fn create_key(&mut self, key: char, pressed: bool, keypad: bool) -> PS2Key {
+        self.double_code = false;
+        PS2Key {key: Some(key), control_key: None, pressed: pressed, keypad: keypad}
+    }
+
+    fn create_control_key(&mut self, key: ControlKey, pressed: bool, keypad: bool) -> PS2Key {
+        self.double_code = false;
+        PS2Key {key: None, control_key: Some(key), pressed: pressed, keypad: keypad}
     }
 
     fn match_set1_scancode(&mut self, code: u8) -> PS2Key {
         let key = match code {
             // KEY PRESSES
-            0x01 => PS2Key {key: None, control_key: Some(ControlKey::Escape), pressed: true},
-            0x02 => PS2Key {key: Some('1'), control_key: None, pressed: true},
-            0x03 => PS2Key {key: Some('2'), control_key: None, pressed: true},
-            0x04 => PS2Key {key: Some('3'), control_key: None, pressed: true},
-            0x05 => PS2Key {key: Some('4'), control_key: None, pressed: true},
-            0x06 => PS2Key {key: Some('5'), control_key: None, pressed: true},
-            0x07 => PS2Key {key: Some('6'), control_key: None, pressed: true},
-            0x08 => PS2Key {key: Some('7'), control_key: None, pressed: true},
-            0x09 => PS2Key {key: Some('8'), control_key: None, pressed: true},
-            0x0a => PS2Key {key: Some('9'), control_key: None, pressed: true},
-            0x0b => PS2Key {key: Some('0'), control_key: None, pressed: true},
-            0x0c => PS2Key {key: Some('-'), control_key: None, pressed: true},
-            0x0d => PS2Key {key: Some('='), control_key: None, pressed: true},
-            0x0e => PS2Key {key: None, control_key: Some(ControlKey::Backspace), pressed: true},
-            0x0f => PS2Key {key: None, control_key: Some(ControlKey::Tab), pressed: true},
-            0x10 => PS2Key {key: Some('q'), control_key: None, pressed: true},
-            0x11 => PS2Key {key: Some('w'), control_key: None, pressed: true},
-            0x12 => PS2Key {key: Some('e'), control_key: None, pressed: true},
-            0x13 => PS2Key {key: Some('r'), control_key: None, pressed: true},
-            0x14 => PS2Key {key: Some('t'), control_key: None, pressed: true},
-            0x15 => PS2Key {key: Some('y'), control_key: None, pressed: true},
-            0x16 => PS2Key {key: Some('u'), control_key: None, pressed: true},
-            0x17 => PS2Key {key: Some('i'), control_key: None, pressed: true},
-            0x18 => PS2Key {key: Some('o'), control_key: None, pressed: true},
-            0x19 => PS2Key {key: Some('p'), control_key: None, pressed: true},
-            0x1a => PS2Key {key: Some('['), control_key: None, pressed: true},
-            0x1b => PS2Key {key: Some(']'), control_key: None, pressed: true},
-            0x1c => PS2Key {key: None, control_key: Some(ControlKey::Enter), pressed: true},
-            0x1d => PS2Key {key: None, control_key: Some(ControlKey::LeftCtrl), pressed: true},
-            0x1e => PS2Key {key: Some('a'), control_key: None, pressed: true},
-            0x1f => PS2Key {key: Some('s'), control_key: None, pressed: true},
-            0x20 => PS2Key {key: Some('d'), control_key: None, pressed: true},
-            0x21 => PS2Key {key: Some('f'), control_key: None, pressed: true},
-            0x22 => PS2Key {key: Some('g'), control_key: None, pressed: true},
-            0x23 => PS2Key {key: Some('h'), control_key: None, pressed: true},
-            0x24 => PS2Key {key: Some('j'), control_key: None, pressed: true},
-            0x25 => PS2Key {key: Some('k'), control_key: None, pressed: true},
-            0x26 => PS2Key {key: Some('l'), control_key: None, pressed: true},
-            0x27 => PS2Key {key: Some(';'), control_key: None, pressed: true},
-            0x28 => PS2Key {key: Some('\''), control_key: None, pressed: true},
-            0x29 => PS2Key {key: Some('`'), control_key: None, pressed: true},
-            0x2a => PS2Key {key: None, control_key:Some(ControlKey::LeftShift), pressed: true},
-            0x2b => PS2Key {key: Some('\\'), control_key: None, pressed: true},
-            0x2c => PS2Key {key: Some('z'), control_key: None, pressed: true},
-            0x2d => PS2Key {key: Some('x'), control_key: None, pressed: true},
-            0x2e => PS2Key {key: Some('c'), control_key: None, pressed: true},
-            0x2f => PS2Key {key: Some('v'), control_key: None, pressed: true},
-            // TODO: Below here has not been implemented yet
-            0x30 => PS2Key {key: None, control_key: None, pressed: true},
-            0x31 => PS2Key {key: None, control_key: None, pressed: true},
-            0x32 => PS2Key {key: None, control_key: None, pressed: true},
-            0x33 => PS2Key {key: None, control_key: None, pressed: true},
-            0x34 => PS2Key {key: None, control_key: None, pressed: true},
-            0x35 => PS2Key {key: None, control_key: None, pressed: true},
-            0x36 => PS2Key {key: None, control_key: None, pressed: true},
-            0x37 => PS2Key {key: None, control_key: None, pressed: true},
-            0x38 => PS2Key {key: None, control_key: None, pressed: true},
-            0x39 => PS2Key {key: None, control_key: None, pressed: true},
-            0x3a => PS2Key {key: None, control_key: None, pressed: true},
-            0x3b => PS2Key {key: None, control_key: None, pressed: true},
-            0x3c => PS2Key {key: None, control_key: None, pressed: true},
-            0x3d => PS2Key {key: None, control_key: None, pressed: true},
-            0x3e => PS2Key {key: None, control_key: None, pressed: true},
-            0x3f => PS2Key {key: None, control_key: None, pressed: true},
-            0x40 => PS2Key {key: None, control_key: None, pressed: true},
-            0x41 => PS2Key {key: None, control_key: None, pressed: true},
-            0x42 => PS2Key {key: None, control_key: None, pressed: true},
-            0x43 => PS2Key {key: None, control_key: None, pressed: true},
-            0x44 => PS2Key {key: None, control_key: None, pressed: true},
-            0x45 => PS2Key {key: None, control_key: None, pressed: true},
-            0x46 => PS2Key {key: None, control_key: None, pressed: true},
-            0x47 => PS2Key {key: None, control_key: None, pressed: true},
-            0x48 => PS2Key {key: None, control_key: None, pressed: true}, 
-            0x49 => PS2Key {key: None, control_key: None, pressed: true},
-            0x4a => PS2Key {key: None, control_key: None, pressed: true},
-            0x4b => PS2Key {key: None, control_key: None, pressed: true},
-            0x4c => PS2Key {key: None, control_key: None, pressed: true},
-            0x4d => PS2Key {key: None, control_key: None, pressed: true},
-            0x4e => PS2Key {key: None, control_key: None, pressed: true},
-            0x4f => PS2Key {key: None, control_key: None, pressed: true},
-            0x50 => PS2Key {key: None, control_key: None, pressed: true},
-            0x51 => PS2Key {key: None, control_key: None, pressed: true},
-            0x52 => PS2Key {key: None, control_key: None, pressed: true},
-            0x53 => PS2Key {key: None, control_key: None, pressed: true},
+            0x01 => self.create_control_key(ControlKey::Escape, true, false),
+            0x02 => self.create_key('1', true, false),
+            0x03 => self.create_key('2', true, false),
+            0x04 => self.create_key('3', true, false),
+            0x05 => self.create_key('4', true, false),
+            0x06 => self.create_key('5', true, false),
+            0x07 => self.create_key('6', true, false),
+            0x08 => self.create_key('7', true, false),
+            0x09 => self.create_key('8', true, false),
+            0x0a => self.create_key('9', true, false),
+            0x0b => self.create_key('0', true, false),
+            0x0c => self.create_key('-', true, false),
+            0x0d => self.create_key('=', true, false),
+            0x0e => self.create_control_key(ControlKey::Backspace, true, false),
+            0x0f => self.create_control_key(ControlKey::Tab, true, false),
+            0x10 => {
+                if self.double_code {
+                    self.double_code = false;
+                    self.create_control_key(ControlKey::MultimediaPrevTrack, true, false)
+                }else{
+                    self.create_key('q', true, false)
+                }
+            },
+            0x11 => self.create_key('w', true, false),
+            0x12 => self.create_key('e', true, false),
+            0x13 => self.create_key('r', true, false),
+            0x14 => self.create_key('t', true, false),
+            0x15 => self.create_key('y', true, false),
+            0x16 => self.create_key('u', true, false),
+            0x17 => self.create_key('i', true, false),
+            0x18 => self.create_key('o', true, false),
+            0x19 => {
+                if self.double_code {
+                    self.double_code = false;
+                    self.create_control_key(ControlKey::MultimediaNextTrack, true, false)
+                }else{
+                    self.create_key('p', true, false)
+                }
+            },
+            0x1a => self.create_key('[', true, false),
+            0x1b => self.create_key(']', true, false),
+            0x1c => {
+                if self.double_code {
+                    self.double_code = false;
+                    self.create_control_key(ControlKey::Enter, true, true)
+                }else{
+                    self.create_control_key(ControlKey::Enter, true, false)
+                }
+            },
+            0x1d => {
+                if self.double_code {
+                    self.double_code = false;
+                    self.create_control_key(ControlKey::RightCtrl, true, false)
+                }else{
+                    self.create_control_key(ControlKey::LeftCtrl, true, false)
+                }
+            },
+            // TODO: Double codes after right control pressed
+            0x1e => self.create_key('a', true, false),
+            0x1f => self.create_key('s', true, false),
+            0x20 => self.create_key('d', true, false),
+            0x21 => self.create_key('f', true, false),
+            0x22 => self.create_key('g', true, false),
+            0x23 => self.create_key('h', true, false),
+            0x24 => self.create_key('j', true, false),
+            0x25 => self.create_key('k', true, false),
+            0x26 => self.create_key('l', true, false),
+            0x27 => self.create_key(';', true, false),
+            0x28 => self.create_key('\'', true, false),
+            0x29 => self.create_key('`', true, false),
+            0x2a => self.create_control_key(ControlKey::LeftShift, true, false),
+            0x2b => self.create_key('\\', true, false),
+            0x2c => self.create_key('z', true, false),
+            0x2d => self.create_key('x', true, false),
+            0x2e => self.create_key('c', true, false),
+            0x2f => self.create_key('v', true, false),
+            0x30 => self.create_key('b', true, false),
+            0x31 => self.create_key('n', true, false),
+            0x32 => self.create_key('m', true, false),
+            0x33 => self.create_key(',', true, false),
+            0x34 => self.create_key('.', true, false),
+            0x35 => self.create_key('/', true, false),
+            0x36 => self.create_control_key(ControlKey::RightShift, true, false),
+            0x37 => self.create_key('*', true, true),
+            0x38 => self.create_control_key(ControlKey::LeftAlt, true, false),
+            0x39 => self.create_key(' ', true, false),
+            0x3a => self.create_control_key(ControlKey::CapsLock, true, false),
+            0x3b => self.create_control_key(ControlKey::F1, true, false),
+            0x3c => self.create_control_key(ControlKey::F2, true, false),
+            0x3d => self.create_control_key(ControlKey::F3, true, false),
+            0x3e => self.create_control_key(ControlKey::F4, true, false),
+            0x3f => self.create_control_key(ControlKey::F5, true, false),
+            0x40 => self.create_control_key(ControlKey::F6, true, false),
+            0x41 => self.create_control_key(ControlKey::F7, true, false),
+            0x42 => self.create_control_key(ControlKey::F8, true, false),
+            0x43 => self.create_control_key(ControlKey::F9, true, false),
+            0x44 => self.create_control_key(ControlKey::F10, true, false),
+            0x45 => self.create_control_key(ControlKey::NumberLock, true, false),
+            0x46 => self.create_control_key(ControlKey::ScrollLock, true, false),
+            0x47 => self.create_key('7', true, true),
+            0x48 => self.create_key('8', true, true), 
+            0x49 => self.create_key('9', true, true),
+            0x4a => self.create_key('-', true, true),
+            0x4b => self.create_key('4', true, true),
+            0x4c => self.create_key('5', true, true),
+            0x4d => self.create_key('6', true, true),
+            0x4e => self.create_key('+', true, true),
+            0x4f => self.create_key('1', true, true),
+            0x50 => self.create_key('2', true, true),
+            0x51 => self.create_key('3', true, true),
+            0x52 => self.create_key('0', true, true),
+            0x53 => self.create_key('.', true, true),
             
             // Break in code sequence
-            0x58 => PS2Key {key: None, control_key: None, pressed: true},
+            0x57 =>self.create_control_key(ControlKey::F11, true, false),
+            0x58 => self.create_control_key(ControlKey::F12, true, false),
             
             // KEY RELEASES
-            0x80 => PS2Key {key: None, control_key: None, pressed: false},
-            0x81 => PS2Key {key: None, control_key: None, pressed: false},
-            0x82 => PS2Key {key: None, control_key: None, pressed: false},
-            0x83 => PS2Key {key: None, control_key: None, pressed: false},
-            0x84 => PS2Key {key: None, control_key: None, pressed: false},
-            0x85 => PS2Key {key: None, control_key: None, pressed: false},
-            0x86 => PS2Key {key: None, control_key: None, pressed: false},
-            0x87 => PS2Key {key: None, control_key: None, pressed: false},
-            0x88 => PS2Key {key: None, control_key: None, pressed: false},
-            0x89 => PS2Key {key: None, control_key: None, pressed: false},
-            0x8a => PS2Key {key: None, control_key: None, pressed: false},
-            0x8b => PS2Key {key: None, control_key: None, pressed: false},
-            0x8c => PS2Key {key: None, control_key: None, pressed: false},
-            0x8d => PS2Key {key: None, control_key: None, pressed: false},
-            0x8e => PS2Key {key: None, control_key: None, pressed: false},
-            0x8f => PS2Key {key: None, control_key: None, pressed: false},
-            0x90 => PS2Key {key: None, control_key: None, pressed: false},
-            0x91 => PS2Key {key: None, control_key: None, pressed: false},
-            0x92 => PS2Key {key: None, control_key: None, pressed: false},
-            0x93 => PS2Key {key: None, control_key: None, pressed: false},
-            0x94 => PS2Key {key: None, control_key: None, pressed: false},
-            0x95 => PS2Key {key: None, control_key: None, pressed: false},
-            0x96 => PS2Key {key: None, control_key: None, pressed: false},
-            0x97 => PS2Key {key: None, control_key: None, pressed: false},
-            0x98 => PS2Key {key: None, control_key: None, pressed: false},
-            0x99 => PS2Key {key: None, control_key: None, pressed: false},
-            0x9a => PS2Key {key: None, control_key: None, pressed: false},
-            0x9b => PS2Key {key: None, control_key: None, pressed: false},
-            0x9c => PS2Key {key: None, control_key: None, pressed: false},
-            0x9d => PS2Key {key: None, control_key: None, pressed: false},
-            0x9e => PS2Key {key: None, control_key: None, pressed: false},
-            0x9f => PS2Key {key: None, control_key: None, pressed: false},
-            0xa0 => PS2Key {key: None, control_key: None, pressed: false},
-            0xa1 => PS2Key {key: None, control_key: None, pressed: false},
-            0xa2 => PS2Key {key: None, control_key: None, pressed: false},
-            0xa3 => PS2Key {key: None, control_key: None, pressed: false},
-            0xa4 => PS2Key {key: None, control_key: None, pressed: false},
-            0xa5 => PS2Key {key: None, control_key: None, pressed: false},
-            0xa6 => PS2Key {key: None, control_key: None, pressed: false},
-            0xa7 => PS2Key {key: None, control_key: None, pressed: false},
-            0xa8 => PS2Key {key: None, control_key: None, pressed: false},
-            0xa9 => PS2Key {key: None, control_key: None, pressed: false},
-            0xaa => PS2Key {key: None, control_key: None, pressed: false},
-            0xab => PS2Key {key: None, control_key: None, pressed: false},
-            0xac => PS2Key {key: None, control_key: None, pressed: false},
-            0xad => PS2Key {key: None, control_key: None, pressed: false},
-            0xae => PS2Key {key: None, control_key: None, pressed: false},
-            0xaf => PS2Key {key: None, control_key: None, pressed: false},
-            0xb0 => PS2Key {key: None, control_key: None, pressed: false},
-            0xb1 => PS2Key {key: None, control_key: None, pressed: false},
-            0xb2 => PS2Key {key: None, control_key: None, pressed: false},
-            0xb3 => PS2Key {key: None, control_key: None, pressed: false},
-            0xb4 => PS2Key {key: None, control_key: None, pressed: false},
-            0xb5 => PS2Key {key: None, control_key: None, pressed: false},
-            0xb6 => PS2Key {key: None, control_key: None, pressed: false},
-            0xb7 => PS2Key {key: None, control_key: None, pressed: false},
-            0xb8 => PS2Key {key: None, control_key: None, pressed: false},
-            0xb9 => PS2Key {key: None, control_key: None, pressed: false},
-            0xba => PS2Key {key: None, control_key: None, pressed: false},
-            0xbb => PS2Key {key: None, control_key: None, pressed: false},
-            0xbc => PS2Key {key: None, control_key: None, pressed: false},
-            0xbd => PS2Key {key: None, control_key: None, pressed: false},
-            0xbe => PS2Key {key: None, control_key: None, pressed: false},
-            0xbf => PS2Key {key: None, control_key: None, pressed: false}, 
-            0xc0 => PS2Key {key: None, control_key: None, pressed: false},
-            0xc1 => PS2Key {key: None, control_key: None, pressed: false},
-            0xc2 => PS2Key {key: None, control_key: None, pressed: false},
-            0xc3 => PS2Key {key: None, control_key: None, pressed: false},
-            0xc4 => PS2Key {key: None, control_key: None, pressed: false},
-            0xc5 => PS2Key {key: None, control_key: None, pressed: false},
-            0xc6 => PS2Key {key: None, control_key: None, pressed: false},
-            0xc7 => PS2Key {key: None, control_key: None, pressed: false},
-            0xc8 => PS2Key {key: None, control_key: None, pressed: false},
-            0xc9 => PS2Key {key: None, control_key: None, pressed: false},
-            0xca => PS2Key {key: None, control_key: None, pressed: false},
-            0xcb => PS2Key {key: None, control_key: None, pressed: false},
-            0xcc => PS2Key {key: None, control_key: None, pressed: false},
-            0xcd => PS2Key {key: None, control_key: None, pressed: false},
-            0xce => PS2Key {key: None, control_key: None, pressed: false},
-            0xcf => PS2Key {key: None, control_key: None, pressed: false},
-            0xd0 => PS2Key {key: None, control_key: None, pressed: false},
-            0xd1 => PS2Key {key: None, control_key: None, pressed: false},
-            0xd2 => PS2Key {key: None, control_key: None, pressed: false},
-            0xd3 => PS2Key {key: None, control_key: None, pressed: false},
+            0x81 => self.create_control_key(ControlKey::Escape, false, false),
+            0x82 => self.create_key('1', false, false),
+            0x83 => self.create_key('2', false, false),
+            0x84 => self.create_key('3', false, false),
+            0x85 => self.create_key('4', false, false),
+            0x86 => self.create_key('5', false, false),
+            0x87 => self.create_key('6', false, false),
+            0x88 => self.create_key('7', false, false),
+            0x89 => self.create_key('8', false, false),
+            0x8a => self.create_key('9', false, false),
+            0x8b => self.create_key('0', false, false),
+            0x8c => self.create_key('-', false, false),
+            0x8d => self.create_key('=', false, false),
+            0x8e => self.create_control_key(ControlKey::Backspace, false, false),
+            0x8f => self.create_control_key(ControlKey::Tab, false, false),
+            0x90 => self.create_key('q', false, false),
+            0x91 => self.create_key('w', false, false),
+            0x92 => self.create_key('e', false, false),
+            0x93 => self.create_key('r', false, false),
+            0x94 => self.create_key('t', false, false),
+            0x95 => self.create_key('y', false, false),
+            0x96 => self.create_key('u', false, false),
+            0x97 => self.create_key('i', false, false),
+            0x98 => self.create_key('o', false, false),
+            0x99 => self.create_key('p', false, false),
+            0x9a => self.create_key('[', false, false),
+            0x9b => self.create_key(']', false, false),
+            0x9c => self.create_control_key(ControlKey::Enter, false, false),
+            0x9d => self.create_control_key(ControlKey::LeftCtrl, false, false),
+            0x9e => self.create_key('a', false, false),
+            0x9f => self.create_key('s', false, false),
+            0xa0 => self.create_key('d', false, false),
+            0xa1 => self.create_key('f', false, false),
+            0xa2 => self.create_key('g', false, false),
+            0xa3 => self.create_key('h', false, false),
+            0xa4 => self.create_key('j', false, false),
+            0xa5 => self.create_key('k', false, false),
+            0xa6 => self.create_key('l', false, false),
+            0xa7 => self.create_key(';', false, false),
+            0xa8 => self.create_key('\'',false, false),
+            0xa9 => self.create_key('`', false, false),
+            0xaa =>self.create_control_key(ControlKey::LeftShift, false, false),
+            0xab => self.create_key('\\',false, false),
+            0xac => self.create_key('z', false, false),
+            0xad => self.create_key('x', false, false),
+            0xae => self.create_key('c', false, false),
+            0xaf => self.create_key('v', false, false),
+            0xb0 => self.create_key('b', false, false),
+            0xb1 => self.create_key('n', false, false),
+            0xb2 => self.create_key('m', false, false),
+            0xb3 => self.create_key(',', false, false),
+            0xb4 => self.create_key('.', false, false),
+            0xb5 => self.create_key('/', false, false),
+            0xb6 => self.create_control_key(ControlKey::RightShift, false,  false),
+            0xb7 => self.create_key('*', false, true),
+            0xb8 => self.create_control_key(ControlKey::LeftAlt, false, false),
+            0xb9 => self.create_key(' ', false, false),
+            0xba => self.create_control_key(ControlKey::CapsLock, false, false),
+            0xbb => self.create_control_key(ControlKey::F1, false, false),
+            0xbc => self.create_control_key(ControlKey::F2, false, false),
+            0xbd => self.create_control_key(ControlKey::F3, false, false),
+            0xbe => self.create_control_key(ControlKey::F4, false, false),
+            0xbf => self.create_control_key(ControlKey::F5, false, false),
+            0xc0 => self.create_control_key(ControlKey::F6, false, false),
+            0xc1 => self.create_control_key(ControlKey::F7, false, false),
+            0xc2 => self.create_control_key(ControlKey::F8, false, false),
+            0xc3 => self.create_control_key(ControlKey::F9, false, false),
+            0xc4 => self.create_control_key(ControlKey::F10, false, false),
+            0xc5 => self.create_control_key(ControlKey::NumberLock, false, false),
+            0xc6 => self.create_control_key(ControlKey::ScrollLock, false, false),
+            0xc7 => self.create_key('7', false, true),
+            0xc8 => self.create_key('8', false, true),
+            0xc9 => self.create_key('9', false, true),
+            0xca => self.create_key('-', false, true),
+            0xcb => self.create_key('4', false, true),
+            0xcc => self.create_key('5', false, true),
+            0xcd => self.create_key('6', false, true),
+            0xce => self.create_key('+', false, true),
+            0xcf => self.create_key('1', false, true),
+            0xd0 => self.create_key('2', false, true),
+            0xd1 => self.create_key('3', false, true),
+            0xd2 => self.create_key('0', false, true),
+            0xd3 => self.create_key('.', false, true),
             
-            0xd7 => PS2Key {key: None, control_key: None, pressed: false},
-            0xd8 => PS2Key {key: None, control_key: None, pressed: false},
-           
-            _ => PS2Key {key: None, control_key: None, pressed: false}
+            // Break in code sequence
+            0xd7 =>self.create_control_key(ControlKey::F11, false, false),
+            0xd8 => self.create_control_key(ControlKey::F12, false, false),
+            
+           // Double codes
+           0xe0 => {
+                self.double_code = true;
+                print!("Double Code!");
+                PS2Key {key: None, control_key: None, pressed: false, keypad: false}
+           },
+            _ => PS2Key {key: None, control_key: None, pressed: false, keypad: false}
         };
 
         key
     }
+
+    
+
 
 }

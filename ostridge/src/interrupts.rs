@@ -2,6 +2,7 @@ use pic8259_simple::ChainedPics;    // Represents a primary/secondary PIC layout
 use spin;
 use x86_64::structures::idt::{InterruptDescriptorTable, ExceptionStackFrame};
 
+use ps_2_scancodes::{PS2ScancodeReader, PS2_PORT_ADDR, ScanCodeSet, ControlKey};
 
 use gdt;
 use hlt_loop;
@@ -56,6 +57,10 @@ lazy_static! {
 }
 
 
+lazy_static! {
+    static ref SCANCODE_READER: spin::Mutex<PS2ScancodeReader> = spin::Mutex::new(PS2ScancodeReader::new(ScanCodeSet::SET1));
+}
+
 /// Initialize the Interrupt Descriptor Table for handling exceptions
 pub fn init_idt() {
     IDT.load();
@@ -84,24 +89,48 @@ extern "x86-interrupt" fn timer_interrupt_handler(_stack_frame: &mut ExceptionSt
 /// Interrupt handler for keyboard input
 extern "x86-interrupt" fn keyboard_interrupt_handler(_stack_frame: &mut ExceptionStackFrame)
 {
-    use ps_2_scancodes;
+    
     use x86_64::instructions::port::Port;
 
 
-    let port = Port::new(ps_2_scancodes::PS2_PORT_ADDR);
+    let port = Port::new(PS2_PORT_ADDR);
     let scancode: u8 = unsafe { port.read() };  // Read the data port of the PS/2 controller
-
-
-    let mut scancode_reader = ps_2_scancodes::PS2ScancodeReader::new(ps_2_scancodes::ScanCodeSet::SET1);
-
-    let key_code = scancode_reader.match_scancode(scancode);
+    
+    let key_code = SCANCODE_READER.lock().match_scancode(scancode);
 
     // POSSIBLE TODO:  I think we need to keep track of things like capslock and numlock here?
 
     if let Some(key) = key_code.key {
         print!("{}", key);
-    }else if let Some(_control) = key_code.control_key{
-        print!("A control key was pressed.")
+    }else if let Some(control) = key_code.control_key{
+        match control {
+            ControlKey::Escape => print!("Escape"),
+            ControlKey::Backspace => print!("Backspace"),
+            ControlKey::Tab => print!("Tab"),
+            ControlKey::Enter => print!("Enter"),
+            ControlKey::LeftCtrl => print!("LeftCtrl"),
+            ControlKey::LeftShift => print!("LeftShift"),
+            ControlKey::RightShift => print!("RightShift"),
+            ControlKey::LeftAlt => print!("LeftAlt"),
+            ControlKey::CapsLock => print!("CapsLock"),
+            ControlKey::F1 => print!("F1"),
+            ControlKey::F2 => print!("F2"),
+            ControlKey::F3 => print!("F3"),
+            ControlKey::F4 => print!("F4"),
+            ControlKey::F5 => print!("F5"),
+            ControlKey::F6 => print!("F6"),
+            ControlKey::F7 => print!("F7"),
+            ControlKey::F8 => print!("F8"),
+            ControlKey::F9 => print!("F9"),
+            ControlKey::F10 => print!("F10"),
+            ControlKey::NumberLock => print!("NumberLock"),
+            ControlKey::ScrollLock => print!("ScrollLock"),
+            ControlKey::F11 => print!("F11"),
+            ControlKey::F12 => print!("F12"),
+            ControlKey::MultimediaPrevTrack => print!("Prev Track"),
+            ControlKey::MultimediaNextTrack => print!("Nect Track"),
+            ControlKey::RightCtrl => print!("RightCtrl"),
+        }
     }else{
         // TODO: Check double interrupt scancodes for keys (will need to store this scancode and wait for the next interrupt)
         // TODO: Also do we need to handle combined key presses here? ex. SHIFT+CTRL or SHIFT+A.
