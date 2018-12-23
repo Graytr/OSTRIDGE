@@ -72,7 +72,8 @@ pub enum ControlKey {
     MultimediaWWWBack = 55,
     MultimediaMyComputer = 56,
     MultimediaEmail = 57,
-    MultimediaSelect = 58
+    MultimediaSelect = 58,
+    PrintScreen = 59
 
 }
 
@@ -208,7 +209,13 @@ impl PS2ScancodeReader {
             0x27 => self.create_key(';', true, false),
             0x28 => self.create_key('\'', true, false),
             0x29 => self.create_key('`', true, false),
-            0x2a => self.create_control_key(ControlKey::LeftShift, true, false),
+            0x2a => {
+                if self.double_code {
+                    self.create_control_key(ControlKey::PrintScreen, true, false)
+                }else{
+                    self.create_control_key(ControlKey::LeftShift, true, false)
+                }
+            },
             0x2b => self.create_key('\\', true, false),
             0x2c => self.create_key('z', true, false),
             0x2d => self.create_key('x', true, false),
@@ -468,7 +475,13 @@ impl PS2ScancodeReader {
             0x8d => self.create_key('=', false, false),
             0x8e => self.create_control_key(ControlKey::Backspace, false, false),
             0x8f => self.create_control_key(ControlKey::Tab, false, false),
-            0x90 => self.create_key('q', false, false),
+            0x90 => {
+                if self.double_code {
+                    self.create_control_key(ControlKey::MultimediaPrevTrack, false, false)
+                }else{
+                    self.create_key('q', false, false)
+                }
+            },
             0x91 => self.create_key('w', false, false),
             0x92 => self.create_key('e', false, false),
             0x93 => self.create_key('r', false, false),
@@ -477,18 +490,60 @@ impl PS2ScancodeReader {
             0x96 => self.create_key('u', false, false),
             0x97 => self.create_key('i', false, false),
             0x98 => self.create_key('o', false, false),
-            0x99 => self.create_key('p', false, false),
+            0x99 => {
+                if self.double_code {
+                    self.create_control_key(ControlKey::MultimediaNextTrack, false, false)
+                }else{
+                    self.create_key('p', false, false)
+                }
+            },
             0x9a => self.create_key('[', false, false),
             0x9b => self.create_key(']', false, false),
-            0x9c => self.create_control_key(ControlKey::Enter, false, false),
-            0x9d => self.create_control_key(ControlKey::LeftCtrl, false, false),
+            0x9c => {
+                if self.double_code {
+                    self.create_control_key(ControlKey::Enter, false, true)
+                }else{
+                    self.create_control_key(ControlKey::Enter, false, false)
+                }
+            },
+            0x9d => {
+                if self.double_code {
+                    self.create_control_key(ControlKey::RightCtrl, false, false)
+                }else{
+                    self.create_control_key(ControlKey::LeftCtrl, false, false)
+                }
+            },
             0x9e => self.create_key('a', false, false),
             0x9f => self.create_key('s', false, false),
-            0xa0 => self.create_key('d', false, false),
-            0xa1 => self.create_key('f', false, false),
-            0xa2 => self.create_key('g', false, false),
+            0xa0 => {
+                if self.double_code {
+                    self.create_control_key(ControlKey::MultimediaMute, false, false)
+                }else{
+                    self.create_key('d', false, false)
+                }
+            },
+            0xa1 => {
+                if self.double_code {
+                    self.create_control_key(ControlKey::MultimediaCalculator, false, false)
+                }else{
+                    self.create_key('f', false, false)
+                }
+            },
+            0xa2 => {
+                if self.double_code {
+                    self.create_control_key(ControlKey::MultimediaPlay, false, false)
+                }else{
+                    self.create_key('g', false, false)
+                }
+            },
             0xa3 => self.create_key('h', false, false),
-            0xa4 => self.create_key('j', false, false),
+            0xa4 => {
+                if self.double_code {
+                    self.create_control_key(ControlKey::MultimediaStop, false, false)
+                }else{
+                    self.create_key('j', false, false)
+                }
+            },
             0xa5 => self.create_key('k', false, false),
             0xa6 => self.create_key('l', false, false),
             0xa7 => self.create_key(';', false, false),
@@ -498,17 +553,53 @@ impl PS2ScancodeReader {
             0xab => self.create_key('\\',false, false),
             0xac => self.create_key('z', false, false),
             0xad => self.create_key('x', false, false),
-            0xae => self.create_key('c', false, false),
+            0xae => {
+                if self.double_code {
+                    self.create_control_key(ControlKey::MultimediaVolumeDown, false, false)
+                }else{
+                    self.create_key('c', false, false)
+                }
+            },
             0xaf => self.create_key('v', false, false),
-            0xb0 => self.create_key('b', false, false),
+            0xb0 => {
+                if self.double_code {
+                    self.create_control_key(ControlKey::MultimediaVolumeUp, false, false)
+                }else{
+                    self.create_key('b', false, false)
+                }
+            },
             0xb1 => self.create_key('n', false, false),
-            0xb2 => self.create_key('m', false, false),
+            0xb2 => {
+                if self.double_code {
+                    self.create_control_key(ControlKey::MultimediaWWWHome, false, false)
+                }else{
+                    self.create_key('m', false, false)
+                }
+            },
             0xb3 => self.create_key(',', false, false),
             0xb4 => self.create_key('.', false, false),
-            0xb5 => self.create_key('/', false, false),
+            0xb5 => {
+                if self.double_code {
+                    self.create_key('/', false, true)
+                }else{
+                    self.create_key('/', false, false)
+                }
+            },
             0xb6 => self.create_control_key(ControlKey::RightShift, false,  false),
-            0xb7 => self.create_key('*', false, true),
-            0xb8 => self.create_control_key(ControlKey::LeftAlt, false, false),
+            0xb7 => {
+                if self.double_code {
+                    self.create_control_key(ControlKey::PrintScreen, false, false)
+                }else{
+                    self.create_key('*', false, true)
+                }
+            },
+            0xb8 => {
+                if self.double_code {
+                    self.create_control_key(ControlKey::RightAlt, false, false)
+                }else{
+                    self.create_control_key(ControlKey::LeftAlt, false, false)
+                }
+            },
             0xb9 => self.create_key(' ', false, false),
             0xba => self.create_control_key(ControlKey::CapsLock, false, false),
             0xbb => self.create_control_key(ControlKey::F1, false, false),
@@ -523,23 +614,191 @@ impl PS2ScancodeReader {
             0xc4 => self.create_control_key(ControlKey::F10, false, false),
             0xc5 => self.create_control_key(ControlKey::NumberLock, false, false),
             0xc6 => self.create_control_key(ControlKey::ScrollLock, false, false),
-            0xc7 => self.create_key('7', false, true),
-            0xc8 => self.create_key('8', false, true),
-            0xc9 => self.create_key('9', false, true),
+            0xc7 => {
+                if self.double_code {
+                    self.create_control_key(ControlKey::Home, false, false)
+                }else{
+                    self.create_key('7', false, true)
+                }
+            },
+            0xc8 => {
+                if self.double_code {
+                    self.create_control_key(ControlKey::CursorUp, false, false)
+                }else{
+                    self.create_key('8', false, true)
+                }
+            },
+            0xc9 => {
+                if self.double_code {
+                    self.create_control_key(ControlKey::PageUp, false, false)
+                }else{
+                    self.create_key('9', false, true)
+                }
+            },
             0xca => self.create_key('-', false, true),
-            0xcb => self.create_key('4', false, true),
+            0xcb => {
+                if self.double_code {
+                    self.create_control_key(ControlKey::CursorLeft, false, false)
+                } else {
+                    self.create_key('4', false, true)
+                }
+            },
             0xcc => self.create_key('5', false, true),
-            0xcd => self.create_key('6', false, true),
+            0xcd => {
+                if self.double_code {
+                    self.create_control_key(ControlKey::CursorRight, false, false)
+                }else{
+                    self.create_key('6', false, true)
+                }
+            },
             0xce => self.create_key('+', false, true),
-            0xcf => self.create_key('1', false, true),
-            0xd0 => self.create_key('2', false, true),
-            0xd1 => self.create_key('3', false, true),
-            0xd2 => self.create_key('0', false, true),
-            0xd3 => self.create_key('.', false, true),
+            0xcf => {
+                if self.double_code {
+                    self.create_control_key(ControlKey::End, false, false)
+                }else{
+                    self.create_key('1', false, true)
+                }
+            },
+            0xd0 => {
+                if self.double_code {
+                    self.create_control_key(ControlKey::CursorDown, false, false)
+                }else{
+                    self.create_key('2', false, true)
+                }
+            },
+            0xd1 => {
+                if self.double_code {
+                    self.create_control_key(ControlKey::PageDown, false, false)
+                }else{
+                    self.create_key('3', false, true)
+                }
+            },
+            0xd2 => {
+                if self.double_code {
+                    self.create_control_key(ControlKey::Insert, false, false)
+                }else{
+                    self.create_key('0', false, true)
+                }
+            },
+            0xd3 => {
+                if self.double_code {
+                    self.create_control_key(ControlKey::Delete, false, false)
+                }else{
+                    self.create_key('.', false, true)
+                }
+            },
             
             // Break in code sequence
             0xd7 =>self.create_control_key(ControlKey::F11, false, false),
             0xd8 => self.create_control_key(ControlKey::F12, false, false),
+
+            0xdb => {
+                if self.double_code {
+                    self.create_control_key(ControlKey::LeftGUI, false, false)
+                }else{
+                    PS2Key {key: None, control_key: None, pressed: false, keypad: false}
+                }
+            },
+            0xdc => {
+                if self.double_code {
+                    self.create_control_key(ControlKey::RightGUI, false, false)
+                }else{
+                    PS2Key {key: None, control_key: None, pressed: false, keypad: false}
+                }
+            },
+            0xdd => {
+                if self.double_code {
+                    self.create_control_key(ControlKey::Apps, false, false)
+                }else{
+                    PS2Key {key: None, control_key: None, pressed: false, keypad: false}
+                }
+            },
+            0xde => {
+                if self.double_code {
+                    self.create_control_key(ControlKey::ACPIPower, false, false)
+                }else{
+                    PS2Key {key: None, control_key: None, pressed: false, keypad: false}
+                }
+            },
+            0xdf => {
+                if self.double_code {
+                    self.create_control_key(ControlKey::ACPISleep, false, false)
+                }else{
+                    PS2Key {key: None, control_key: None, pressed: false, keypad: false}
+                }
+            },
+            0xe3 => {
+                if self.double_code {
+                    self.create_control_key(ControlKey::ACPIWake, false, false)
+                }else{
+                    PS2Key {key: None, control_key: None, pressed: false, keypad: false}
+                }
+            },
+            0xe5 => {
+                if self.double_code {
+                    self.create_control_key(ControlKey::MultimediaWWWSearch, false, false)
+                }else{
+                    PS2Key {key: None, control_key: None, pressed: false, keypad: false}
+                }
+            },
+            0xe6 => {
+                if self.double_code {
+                    self.create_control_key(ControlKey::MultimediaWWWFavourites, false, false)
+                }else{
+                    PS2Key {key: None, control_key: None, pressed: false, keypad: false}
+                }
+            },
+            0xe7 => {
+                if self.double_code {
+                    self.create_control_key(ControlKey::MultimediaWWWRefresh, false, false)
+                }else{
+                    PS2Key {key: None, control_key: None, pressed: false, keypad: false}
+                }
+            },
+            0xe8 => {
+                if self.double_code {
+                    self.create_control_key(ControlKey::MultimediaWWWStop, false, false)
+                }else{
+                    PS2Key {key: None, control_key: None, pressed: false, keypad: false}
+                }
+            },
+            0xe9 => {
+                if self.double_code {
+                    self.create_control_key(ControlKey::MultimediaWWWForward, false, false)
+                }else{
+                    PS2Key {key: None, control_key: None, pressed: false, keypad: false}
+                }
+            },
+            0xea => {
+                if self.double_code {
+                    self.create_control_key(ControlKey::MultimediaWWWBack, false, false)
+                }else{
+                    PS2Key {key: None, control_key: None, pressed: false, keypad: false}
+                }
+            },
+            0xeb => {
+                if self.double_code {
+                    self.create_control_key(ControlKey::MultimediaMyComputer, false, false)
+                }else{
+                    PS2Key {key: None, control_key: None, pressed: false, keypad: false}
+                }
+            },
+            0xec => {
+                if self.double_code {
+                    self.create_control_key(ControlKey::MultimediaEmail, false, false)
+                }else{
+                    PS2Key {key: None, control_key: None, pressed: false, keypad: false}
+                }
+            },
+            0xed => {
+                if self.double_code {
+                    self.create_control_key(ControlKey::MultimediaSelect, false, false)
+                }else{
+                    PS2Key {key: None, control_key: None, pressed: false, keypad: false}
+                }
+            },
+
+
             
            // Double codes
            0xe0 => {

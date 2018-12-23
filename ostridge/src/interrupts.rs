@@ -162,7 +162,8 @@ extern "x86-interrupt" fn keyboard_interrupt_handler(_stack_frame: &mut Exceptio
             ControlKey::MultimediaWWWBack  => print!("MultimediaWWWBack"),
             ControlKey::MultimediaMyComputer  => print!("MultimediaMyComputer"),
             ControlKey::MultimediaEmail  => print!("MultimediaEmail"),
-            ControlKey::MultimediaSelect  => print!("MultimediaSelect")
+            ControlKey::MultimediaSelect  => print!("MultimediaSelect"),
+            ControlKey::PrintScreen => print!("Print Screen")
         }
     }else{
         // TODO: Check double interrupt scancodes for keys (will need to store this scancode and wait for the next interrupt)
