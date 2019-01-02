@@ -458,7 +458,6 @@ impl PS2ScancodeReader {
                 }
             },
 
-            // TODO: Double codes for releases
             // KEY RELEASES
             0x81 => self.create_control_key(ControlKey::Escape, false, false),
             0x82 => self.create_key('1', false, false),
